@@ -199,5 +199,5 @@ app.put("/snacks/:id", (request, response, next) => {
   });
 
   app.listen(PORT, () => {
-    console.log(`Snacks are on the way to http://localhost:${PORT}`);
-})
+    console.log(`The server is running on http://localhost:${PORT}`);
+  });
