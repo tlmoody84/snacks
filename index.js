@@ -197,7 +197,7 @@ app.put("/snacks/:id", (request, response, next) => {
         "Resource not found. Are you sure you're looking in the right place?",
     });
   });
-
   app.listen(PORT, () => {
     console.log(`The server is running on http://localhost:${PORT}`);
   });
+ 
