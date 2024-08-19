@@ -6,11 +6,97 @@ const app = express();
 
 const PORT  = 4000;
 
+const SNACKS =  [
+
+  {
+      "id": 1,
+      "name": "Chips",
+      "description": "Crunchy and salty potato chips.",
+      "price": 2.99,
+      "category": "Salty Snacks",
+      "inStock": true
+    },
+    {
+      "id": 2,
+      "name": "Chocolate Bar",
+      "description": "Rich and creamy milk chocolate bar.",
+      "price": 1.49,
+      "category": "Sweet Snacks",
+      "inStock": true
+    },
+    {
+      "id": 3,
+      "name": "Popcorn",
+      "description": "Buttery and fluffy popcorn.",
+      "price": 3.49,
+      "category": "Salty Snacks",
+      "inStock": false
+    },
+    {
+      "id": 4,
+      "name": "Gummy Bears",
+      "description": "Colorful and chewy gummy bears.",
+      "price": 2.19,
+      "category": "Sweet Snacks",
+      "inStock": true
+    },
+    {
+      "id": 5,
+      "name": "Pretzels",
+      "description": "Crispy and twisted pretzels.",
+      "price": 2.79,
+      "category": "Salty Snacks",
+      "inStock": true
+    },
+    {
+      "id": 6,
+      "name": "Granola Bar",
+      "description": "Healthy and crunchy granola bar.",
+      "price": 1.99,
+      "category": "Healthy Snacks",
+      "inStock": true
+    },
+    {
+      "id": 7,
+      "name": "Fruit Snacks",
+      "description": "Sweet and fruity gummy snacks.",
+      "price": 2.49,
+      "category": "Sweet Snacks",
+      "inStock": false
+    },
+    {
+      "id": 8,
+      "name": "Nuts Mix",
+      "description": "A mix of roasted and salted nuts.",
+      "price": 4.99,
+      "category": "Healthy Snacks",
+      "inStock": true
+    },
+    {
+      "id": 9,
+      "name": "Energy Bar",
+      "description": "High-protein energy bar.",
+      "price": 2.59,
+      "category": "Healthy Snacks",
+      "inStock": true
+    },
+    {
+      "id": 10,
+      "name": "Rice Crackers",
+      "description": "Light and crispy rice crackers.",
+      "price": 3.19,
+      "category": "Healthy Snacks",
+      "inStock": false
+    }
+];
+
+app.use(cors());
+
 app.use(express.json());
 
-app.get('/', (request, response) => {
-    response.send("Snacks are good");
-})
+app.get("/snacks", (request, response) => {
+    response.json(SNACKS);
+});
 
 
 app.use((request, response, next) => {
@@ -24,92 +110,9 @@ app.use(express.json());
 
 
 
-const SNACKS =  [
 
-    {
-        "id": 1,
-        "name": "Chips",
-        "description": "Crunchy and salty potato chips.",
-        "price": 2.99,
-        "category": "Salty Snacks",
-        "inStock": true
-      },
-      {
-        "id": 2,
-        "name": "Chocolate Bar",
-        "description": "Rich and creamy milk chocolate bar.",
-        "price": 1.49,
-        "category": "Sweet Snacks",
-        "inStock": true
-      },
-      {
-        "id": 3,
-        "name": "Popcorn",
-        "description": "Buttery and fluffy popcorn.",
-        "price": 3.49,
-        "category": "Salty Snacks",
-        "inStock": false
-      },
-      {
-        "id": 4,
-        "name": "Gummy Bears",
-        "description": "Colorful and chewy gummy bears.",
-        "price": 2.19,
-        "category": "Sweet Snacks",
-        "inStock": true
-      },
-      {
-        "id": 5,
-        "name": "Pretzels",
-        "description": "Crispy and twisted pretzels.",
-        "price": 2.79,
-        "category": "Salty Snacks",
-        "inStock": true
-      },
-      {
-        "id": 6,
-        "name": "Granola Bar",
-        "description": "Healthy and crunchy granola bar.",
-        "price": 1.99,
-        "category": "Healthy Snacks",
-        "inStock": true
-      },
-      {
-        "id": 7,
-        "name": "Fruit Snacks",
-        "description": "Sweet and fruity gummy snacks.",
-        "price": 2.49,
-        "category": "Sweet Snacks",
-        "inStock": false
-      },
-      {
-        "id": 8,
-        "name": "Nuts Mix",
-        "description": "A mix of roasted and salted nuts.",
-        "price": 4.99,
-        "category": "Healthy Snacks",
-        "inStock": true
-      },
-      {
-        "id": 9,
-        "name": "Energy Bar",
-        "description": "High-protein energy bar.",
-        "price": 2.59,
-        "category": "Healthy Snacks",
-        "inStock": true
-      },
-      {
-        "id": 10,
-        "name": "Rice Crackers",
-        "description": "Light and crispy rice crackers.",
-        "price": 3.19,
-        "category": "Healthy Snacks",
-        "inStock": false
-      }
 
-];
-
-app.get("/snacks", (request, response) => {
+app.get("/", (request, response) => {
   response.json(SNACKS);
 })
 
@@ -180,6 +183,23 @@ app.put("/snacks/:id", (request, response, next) => {
       next(error);
     }
   });
+
+  app.delete("/snacks/:id", (request, response) => {
+    try {
+      const id = parseInt(request.params.id);
+      const foundSnackIndex = SNACKS.findIndex((snack) => snack.id === id);
+  
+      if (foundSnackIndex === -1) {
+        return response.status(404).json({ message: "Snack not found!" });
+      }
+  
+      const deletedSnack = SNACKS.splice(foundSnackIndex, 1)[0]; 
+  
+      response.status(200).json({ message: "Snack deleted successfully!", deletedSnack });
+    } catch (error) {
+      next(error);
+    }
+  });
   
   
   app.use((error, request, response, next) => {
@@ -191,12 +211,11 @@ app.put("/snacks/:id", (request, response, next) => {
     });
   });
   
-  app.use((request, response, next) => {
-    response.status(404).json({
-      error:
-        "Resource not found. Are you sure you're looking in the right place?",
-    });
+  app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong!' });
   });
+ 
   app.listen(PORT, () => {
     console.log(`The server is running on http://localhost:${PORT}`);
   });
