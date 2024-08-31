@@ -4,9 +4,9 @@ require("dotenv").config();
 const express = require("express");
 //Import CORS
 const cors = require("cors");
+
 //Import axios
 const axios = require("axios");
-
 //ImportSupabase instance
 const supabase = require("./supabaseInstance");
 //Create express app
@@ -120,119 +120,120 @@ app.use(express.json());
 
 
 
-
-app.get("/snacks", async (request, response, next) => {
+//Route to get all snacks
+app.get("/snacks", async (req, res, next) => {
   try {
-    // response.json(SNACKS);
-    const res = await supabase.instance.get("/snacks")
-    response.json(res.data);
-  } catch (error) {
-    next(error);
-  }
-  // response.json(SNACKS);
-});
+    const { data, error } = await supabase
+      .from("snacks")
+      .select("*");
 
-app.get("/snacks/:id", (request, response, next) => {
-    try {
-      const foundSnacks = SNACKS.find((value) => {
-        return value.id === parseInt(request.params.id);
-      });
-      if (!foundSnacks) {
-        return response.status(404).json({ message: "Snacks are unavailable!" });
-      }
-      response.json(foundSnacks);
-    } catch (error) {
-      next(error);
+    if (error) throw error;
+
+    if (!data) {
+      return res.status(404).json({ message: "Snack not found"});
     }
-  });
 
-  app.post("/snacks", (request, response, next) => {
-    try {
-      const { name, description, price, category, inStock } = request.body;
-  
-      if (!name || !description || !price || !category || !inStock) {
-        return response
-          .status(400)
-          .json({ message: "Missing required fields!!" });
-      }
-      const newSnacks = {
-        id: SNACKS.length + 1,
-        name,
-        description,
-        price,
-        category,
-        inStock,
-      };
-      SNACKS.push(newSnacks);
-    console.log(SNACKS);
-
-    response.status(201).json(newSnacks);
+    res.json(data);
   } catch (error) {
     next(error);
   }
 });
 
+// Route to get a single snack by ID
+app.get("/snacks/:id", async (req, res, next) => {
+  try {
+    const { data, error } = await supabase
+      .from("snacks")
+      .select("*")
+      .eq("id", req.params.id)
+      .single();
 
-app.put("/snacks/:id", (request, response, next) => {
-    try {
-      const foundSnacks = SNACKS.find((value) => {
-        return value.id === parseInt(request.params.id);
-      });
-  
-      const { name, description, price, category, inStock } = request.body;
-        if (!name || !description || !price || !category || !inStock) {
-        return response
-          .status(400)
-          .json({ message: "Missing required fields!!" });
-      }
-  
-      foundSnacks.name = name;
-      foundSnacks.description = description;
-      foundSnacks.price = price;
-      foundSnacks.category = category;
-      foundSnacks.inStock = inStock;
-  
-      response.json(foundSnacks);
-  
-      console.log(SNACKS);
-    } catch (error) {
-      next(error);
-    }
-  });
+    if (error) throw error;
 
-  app.delete("/snacks/:id", (request, response) => {
-    try {
-      const id = parseInt(request.params.id);
-      const foundSnackIndex = SNACKS.findIndex((snack) => snack.id === id);
-  
-      if (foundSnackIndex === -1) {
-        return response.status(404).json({ message: "Snack not found!" });
-      }
-  
-      const deletedSnack = SNACKS.splice(foundSnackIndex, 1)[0]; 
-  
-      response.status(200).json({ message: "Snack deleted successfully!", deletedSnack });
-    } catch (error) {
-      next(error);
+    if (!data) {
+      return res.status(404).json({ message: "Snack not found!" });
     }
-  });
+
+    res.json(data);
+  } catch (error) {
+    next(error);
+  }
+});
+
+  // Route to add a new snack
+app.post("/snacks", async (req, res, next) => {
+  try {
+    const { name, description, price, category, inStock } = req.body;
+
+    if (!name || !description || !price || !category || !inStock === undefined) {
+      return res.status(400).json({ message: "Missing required fields!" });
+    }
+
+    const { data, error } = await supabase
+      .from("snacks")
+      .insert([{ name, description, price, category, inStock }]);
+
+    if (error) throw error;
+
+    res.status(201).json(data[0]);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Route to update a snack by ID
+app.put("/snacks/:id", async (req, res, next) => {
+  try {
+    const { name, description, price, category, inStock } = req.body;
+
+    if (!req.body.price) {
+      return res.status(400).json({ message: "Missing required fields!" });
+    }
+
+    const { data, error } = await supabase
+      .from("snacks")
+      .update({ name, description, price, category, inStock })
+      .eq("id", req.params.id);
+
+    if (error) throw error;
+
+    if (data.length === 0) {
+      return res.status(404).json({ message: "Snack not found!" });
+    }
+
+    res.json(data[0]);
+  } catch (error) {
+    next(error);
+  }
+});
+
+  // Route to delete a snack by ID
+app.delete("/snacks/:id", async (req, res, next) => {
+  try {
+    const { data, error } = await supabase
+      .from("snacks")
+      .delete()
+      .eq("id", req.params.id);
+
+    if (error) throw error;
+
+    if (data.length === 0) {
+      return res.status(404).json({ message: "Snack not found!" });
+    }
+
+    res.json({ message: "Snack deleted successfully!", deletedSnack: data[0] });
+  } catch (error) {
+    next(error);
+  }
+});
   
-  
-  app.use((error, request, response, next) => {
-    console.error(error.stack);
-    response.status(500).json({
-      error: "Something broke!",
-      errorStack: error.stack,
-      errorMessage: error.message,
-    });
-  });
-  
-  app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something went wrong!' });
-  });
- 
-  app.listen(PORT, () => {
-    console.log(`The server is running on http://localhost:${PORT}`);
-  });
- 
+ //Error handler 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
+});
+
+app.listen(PORT, () => {
+  console.log(`The server   
+ is running on http://localhost:${PORT}`);
+});
