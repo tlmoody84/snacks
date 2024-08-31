@@ -1,8 +1,15 @@
+require("dotenv").config();
 const express = require("express");
 
 const cors = require("cors");
 
+const axios = require("axios");
+
+const supabase = require("./supabaseInstance");
+
 const app = express();
+
+const supabase = require('./supabase')
 
 const PORT  = 4000;
 
@@ -112,8 +119,9 @@ app.use(express.json());
 
 
 
-app.get("/", (request, response) => {
-  response.json(SNACKS);
+app.get("/", async (request, response) => {
+  // response.json(SNACKS);
+  const response = await supabase.get("/snacks")
 })
 
 app.get("/snacks/:id", (request, response, next) => {

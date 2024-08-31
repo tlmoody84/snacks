@@ -10,6 +10,8 @@
   "author": "Tiffany Sharpe",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.3",
+    "axios": "^1.7.6",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "nodemon": "^3.1.4"
