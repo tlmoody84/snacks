@@ -1,17 +1,19 @@
+//Import Dotenv
 require("dotenv").config();
+//Import Express
 const express = require("express");
-
+//Import CORS
 const cors = require("cors");
-
+//Import axios
 const axios = require("axios");
 
+//ImportSupabase instance
 const supabase = require("./supabaseInstance");
-
+//Create express app
 const app = express();
 
-const supabase = require('./supabase')
-
-const PORT  = 4000;
+//Define port
+const PORT = 4000;
 
 const SNACKS =  [
 
@@ -119,10 +121,16 @@ app.use(express.json());
 
 
 
-app.get("/", async (request, response) => {
+app.get("/snacks", async (request, response, next) => {
+  try {
+    // response.json(SNACKS);
+    const res = await supabase.instance.get("/snacks")
+    response.json(res.data);
+  } catch (error) {
+    next(error);
+  }
   // response.json(SNACKS);
-  const response = await supabase.get("/snacks")
-})
+});
 
 app.get("/snacks/:id", (request, response, next) => {
     try {
