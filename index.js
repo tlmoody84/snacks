@@ -103,22 +103,18 @@ app.use(cors());
 
 app.use(express.json());
 
-app.get("/snacks", (request, response) => {
+app.get("/snacks", (request, response, next) => {
     response.json(SNACKS);
 });
 
+// app.use((request, response, next) => {
+//     console.log(`${request.method} request for ${request.url}`);
+//     next()
+// });
 
-app.use((request, response, next) => {
-    console.log(`${request.method} request for ${request.url}`);
-    next()
-});
+// app.use(cors());
 
-app.use(cors());
-
-app.use(express.json());
-
-
-
+// app.use(express.json());
 
 //Route to get all snacks
 app.get("/snacks", async (req, res, next) => {
@@ -163,15 +159,16 @@ app.get("/snacks/:id", async (req, res, next) => {
   // Route to add a new snack
 app.post("/snacks", async (req, res, next) => {
   try {
-    const { name, description, price, category, inStock } = req.body;
+    const { name, description, price, category, inStock} = req.body;
 
-    if (!name || !description || !price || !category || !inStock === undefined) {
+    if (!name || !description || !price || !category || !inStock ) {
       return res.status(400).json({ message: "Missing required fields!" });
     }
 
     const { data, error } = await supabase
       .from("snacks")
-      .insert([{ name, description, price, category, inStock }]);
+      .insert([{ name, description, price, category, inStock }])
+      .select();
 
     if (error) throw error;
 
@@ -186,14 +183,24 @@ app.put("/snacks/:id", async (req, res, next) => {
   try {
     const { name, description, price, category, inStock } = req.body;
 
-    if (!req.body.price) {
-      return res.status(400).json({ message: "Missing required fields!" });
+    // Ensure at least one field is provided to update
+    if (!name && !description && !price && !category && inStock === undefined) {
+      return res.status(400).json({ message: "No fields to update!" });
     }
+
+    // Construct the update object only with fields provided
+    const updateObject = {};
+    if (name) updateObject.name = name;
+    if (description) updateObject.description = description;
+    if (price !== undefined) updateObject.price = price;
+    if (category) updateObject.category = category;
+    if (inStock !== undefined) updateObject.inStock = inStock;
 
     const { data, error } = await supabase
       .from("snacks")
-      .update({ name, description, price, category, inStock })
-      .eq("id", req.params.id);
+      .update(updateObject)
+      .eq("id", req.params.id)
+      .select(); // Ensure data is returned
 
     if (error) throw error;
 
@@ -207,26 +214,33 @@ app.put("/snacks/:id", async (req, res, next) => {
   }
 });
 
-  // Route to delete a snack by ID
+
 app.delete("/snacks/:id", async (req, res, next) => {
   try {
+    // Delete the snack with the given ID
     const { data, error } = await supabase
       .from("snacks")
       .delete()
-      .eq("id", req.params.id);
+      .eq("id", req.params.id)
+      .select(); // Ensure that the deleted row is returned
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error:", error);
+      return res.status(500).json({ message: "Error deleting snack." });
+    }
 
+    // If no rows are deleted, return 404
     if (data.length === 0) {
       return res.status(404).json({ message: "Snack not found!" });
     }
 
+    // Return success message with the deleted snack
     res.json({ message: "Snack deleted successfully!", deletedSnack: data[0] });
   } catch (error) {
+    console.error("Server error:", error);
     next(error);
   }
 });
-  
  //Error handler 
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -234,6 +248,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`The server   
+  console.log(`The server  
  is running on http://localhost:${PORT}`);
 });
